@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,24 +30,25 @@ public class BlueprintsAPIController {
     @GetMapping
     @Operation(summary = "gets the list of all blueprints")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "successfull query")
+            @ApiResponse(responseCode = "200", description = "successful query")
     })
-    public ResponseEntity<Set<Blueprint>> getAll() {
-        return ResponseEntity.ok(services.getAllBlueprints());
+    public ResponseEntity<ApiResult<Set<Blueprint>>> getAll() {
+        Set<Blueprint> all = services.getAllBlueprints();
+        return ResponseEntity.ok(new ApiResult<>(200, "successful query", all));
     }
 
     // GET /blueprints/{author}
     @GetMapping("/{author}")
     @Operation(summary = "gets all the author's blueprints")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "successfull query"),
+            @ApiResponse(responseCode = "200", description = "successful query"),
             @ApiResponse(responseCode = "404", description = "author not found")
     })
-    public ResponseEntity<?> byAuthor(@PathVariable String author) {
+    public ResponseEntity<ApiResult<Set<Blueprint>>> byAuthor(@PathVariable String author) {
         try {
-            return ResponseEntity.ok(services.getBlueprintsByAuthor(author));
+            return ResponseEntity.ok(new ApiResult<>(200, "successful query", services.getBlueprintsByAuthor(author)));
         } catch (BlueprintNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResult<>(404, "author not found", null));
         }
     }
 
@@ -57,11 +59,11 @@ public class BlueprintsAPIController {
             @ApiResponse(responseCode = "200", description = "successful query"),
             @ApiResponse(responseCode = "404", description = "author or blueprint not found")
     })
-    public ResponseEntity<?> byAuthorAndName(@PathVariable String author, @PathVariable String bpname) {
+    public ResponseEntity<ApiResult<Blueprint>> byAuthorAndName(@PathVariable String author, @PathVariable String bpname) {
         try {
-            return ResponseEntity.ok(services.getBlueprint(author, bpname));
+            return ResponseEntity.ok(new ApiResult<>(200, "successful query", services.getBlueprint(author, bpname)));
         } catch (BlueprintNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResult<>(404, "author or blueprint not found", null));
         }
     }
 
@@ -78,7 +80,7 @@ public class BlueprintsAPIController {
             services.addNewBlueprint(bp);
             return ResponseEntity.status(HttpStatus.CREATED).build();
         } catch (BlueprintPersistenceException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResult<>(400, "invalid data", null));
         }
     }
 
@@ -95,7 +97,7 @@ public class BlueprintsAPIController {
             services.addPoint(author, bpname, p.x(), p.y());
             return ResponseEntity.status(HttpStatus.ACCEPTED).build();
         } catch (BlueprintNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResult<>(400, "invalid data", null));
         }
     }
 
