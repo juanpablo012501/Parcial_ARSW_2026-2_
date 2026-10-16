@@ -5,6 +5,9 @@ import edu.eci.arsw.blueprints.model.Point;
 import edu.eci.arsw.blueprints.persistence.BlueprintNotFoundException;
 import edu.eci.arsw.blueprints.persistence.BlueprintPersistenceException;
 import edu.eci.arsw.blueprints.services.BlueprintsServices;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpStatus;
@@ -24,12 +27,21 @@ public class BlueprintsAPIController {
 
     // GET /blueprints
     @GetMapping
+    @Operation(summary = "gets the list of all blueprints")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "successfull query")
+    })
     public ResponseEntity<Set<Blueprint>> getAll() {
         return ResponseEntity.ok(services.getAllBlueprints());
     }
 
     // GET /blueprints/{author}
     @GetMapping("/{author}")
+    @Operation(summary = "gets all the author's blueprints")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "successfull query"),
+            @ApiResponse(responseCode = "404", description = "author not found")
+    })
     public ResponseEntity<?> byAuthor(@PathVariable String author) {
         try {
             return ResponseEntity.ok(services.getBlueprintsByAuthor(author));
@@ -40,6 +52,11 @@ public class BlueprintsAPIController {
 
     // GET /blueprints/{author}/{bpname}
     @GetMapping("/{author}/{bpname}")
+    @Operation(summary = "get the author's blueprint with the name given")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "successful query"),
+            @ApiResponse(responseCode = "404", description = "author or blueprint not found")
+    })
     public ResponseEntity<?> byAuthorAndName(@PathVariable String author, @PathVariable String bpname) {
         try {
             return ResponseEntity.ok(services.getBlueprint(author, bpname));
@@ -50,6 +67,11 @@ public class BlueprintsAPIController {
 
     // POST /blueprints
     @PostMapping
+    @Operation(summary = "create a new blueprint")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "blueprint created"),
+            @ApiResponse(responseCode = "400", description = "invalid data")
+    })
     public ResponseEntity<?> add(@Valid @RequestBody NewBlueprintRequest req) {
         try {
             Blueprint bp = new Blueprint(req.author(), req.name(), req.points());
@@ -62,6 +84,11 @@ public class BlueprintsAPIController {
 
     // PUT /blueprints/{author}/{bpname}/points
     @PutMapping("/{author}/{bpname}/points")
+    @Operation(summary = "author updates the blueprint")
+    @ApiResponses({
+            @ApiResponse(responseCode = "202", description = "accepted change"),
+            @ApiResponse(responseCode = "400", description = "invalid data")
+    })
     public ResponseEntity<?> addPoint(@PathVariable String author, @PathVariable String bpname,
                                       @RequestBody Point p) {
         try {
